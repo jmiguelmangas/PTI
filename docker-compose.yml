@@ -1,0 +1,11 @@
+services:
+  air_quality_api:
+    build: .
+    container_name: air_quality_api
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      - MONGO_URI=mongodb://host.docker.internal:27017
+    volumes:
+      - .:/app

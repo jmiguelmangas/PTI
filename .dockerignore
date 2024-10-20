@@ -1,0 +1,18 @@
+# Ignorar archivos y carpetas innecesarios para la imagen Docker
+
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Ignorar archivos de datos grandes
+2000.nc
+json_fragments/
+
+# Ignorar archivos de configuración del entorno
+.env
+venv/
+
+# Ignorar archivos relacionados con IDE
+.vscode/
+.idea/
