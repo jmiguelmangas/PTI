@@ -110,7 +110,7 @@ def delete_data(id: str):
         logger.error(f"Error deleting data: {e}")
         raise HTTPException(status_code=500, detail="An internal error occurred while deleting data.")
 
-@app.get("/data/filter")
+@app.get("/filter_data/")
 def filter_data(latitude: float = Query(None), longitude: float = Query(None), limit: int = 100):
     try:
         logger.info(f"Request received to filter data: latitude={latitude}, longitude={longitude}")
@@ -132,7 +132,7 @@ def filter_data(latitude: float = Query(None), longitude: float = Query(None), l
         logger.error(f"Error retrieving filtered data: {e}")
         raise HTTPException(status_code=500, detail="An internal error occurred while filtering data.")
 
-@app.get("/data/stats")
+@app.get("/statistics/")
 def get_statistics():
     try:
         logger.info("Request received to get dataset statistics.")
