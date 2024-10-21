@@ -8,15 +8,14 @@ from pymongo import MongoClient
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Configurar conexión a MongoDB
+# Connection to Mongodb Database
 client = MongoClient('mongodb://localhost:27017/')  # Ajusta la URL si utilizas un servidor diferente
 db = client['air_quality_db']
 collection = db['pm25_data']
 
-# Directorio donde se encuentran los fragmentos JSON
 json_dir = "json_fragments"
 
-# Iterar sobre todos los archivos JSON en el directorio
+# Iterating over the Json Files, adding them to MongoDb
 def load_json_to_mongodb():
     try:
         if not os.path.exists(json_dir):

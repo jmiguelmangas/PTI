@@ -20,7 +20,7 @@ def split_dataset_to_json():
         nc = netCDF4.Dataset(dataset_path, mode='r')
         logger.info("Dataset opened successfully.")
         
-        # Cargar los datos completos de latitudes, longitudes y PM2.5
+        
         latitudes = nc.variables['lat'][:]
         longitudes = nc.variables['lon'][:]
         pm25_levels = nc.variables['GWRPM25'][:]
@@ -32,7 +32,7 @@ def split_dataset_to_json():
         }
 
         logger.info("Starting to iterate over latitudes and longitudes to extract data.")
-        # Iterar sobre todas las combinaciones y agregar datos válidos
+        
         for i in range(len(latitudes)):
             for j in range(len(longitudes)):
                 pm25 = pm25_levels[i, j]
@@ -45,11 +45,11 @@ def split_dataset_to_json():
         df = pd.DataFrame(data)
         logger.info("Data loaded into DataFrame.")
         
-        # Dividir el DataFrame en fragmentos
+        # Dividing the df in chunks
         chunk_size = 10000  # Tamaño del fragmento
         num_chunks = len(df) // chunk_size + 1
 
-        # Crear el archivo índice
+        # creating the index file
         index_data = []
 
         logger.info("Starting to split the DataFrame into fragments.")
@@ -60,11 +60,11 @@ def split_dataset_to_json():
                 fragment = df[start_idx:end_idx]
                 fragment_file = f"{output_dir}/fragment_{i}.json"
                 
-                # Guardar el fragmento como archivo JSON
+                # Saving the chunk as a Json File
                 fragment.to_json(fragment_file, orient='records', indent=2)
                 logger.info(f"Fragment {i} saved to {fragment_file}.")
 
-                # Añadir información al índice
+                # Adding info to the index file
                 index_data.append({
                     'fragment': fragment_file,
                     'start_idx': start_idx,
@@ -74,7 +74,7 @@ def split_dataset_to_json():
             except Exception as e:
                 logger.error(f"Error while processing fragment {i}: {e}")
 
-        # Guardar el archivo índice como JSON
+        # Saving the index as a Json File
         try:
             index_file_path = f"{output_dir}/index.json"
             with open(index_file_path, 'w') as index_file:
