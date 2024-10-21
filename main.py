@@ -1,15 +1,16 @@
 import logging
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query,BackgroundTasks
 from pydantic import BaseModel
 import pymongo
-import os
+import os,time
 from bson import ObjectId
 
-# Configurar logging
+
+cache = {}
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Configurar la conexión a MongoDB
+#conexión a MongoDB
 MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017")
 try:
     client = pymongo.MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000)
@@ -22,7 +23,7 @@ except pymongo.errors.ServerSelectionTimeoutError as e:
 db = client["air_quality_db"] if client is not None else None
 collection = db["pm25_data"] if db is not None else None
 
-# Crear la aplicación FastAPI
+
 app = FastAPI()
 
 @app.on_event("startup")
@@ -133,26 +134,39 @@ def filter_data(latitude: float = Query(None), longitude: float = Query(None), l
         raise HTTPException(status_code=500, detail="An internal error occurred while filtering data.")
 
 @app.get("/statistics/")
-def get_statistics():
+def get_statistics(background_tasks: BackgroundTasks):
+    if "statistics" in cache and time.time() - cache["timestamp"] < 300:  # Cache for 5 minutes
+        return cache["statistics"]
+
     try:
         logger.info("Request received to get dataset statistics.")
         if collection is None:
             raise HTTPException(status_code=500, detail="Database not connected")
+
         count = collection.count_documents({})
         if count == 0:
             logger.error("Dataset not available for statistics.")
             raise HTTPException(status_code=404, detail="Dataset not available")
-        avg_pm25 = collection.aggregate([{ "$group": { "_id": None, "avg_pm25": { "$avg": "$pm25" }, "min_pm25": { "$min": "$pm25" }, "max_pm25": { "$max": "$pm25" }}}])
+
+        avg_pm25 = collection.aggregate([
+            { "$group": { "_id": None, "avg_pm25": { "$avg": "$pm25" }, "min_pm25": { "$min": "$pm25" }, "max_pm25": { "$max": "$pm25" }}}
+        ])
         stats = next(avg_pm25, None)
         if stats is None:
             raise HTTPException(status_code=404, detail="Statistics could not be calculated")
-        logger.info("Statistics calculated successfully.")
-        return {
+
+        stats_result = {
             "count": count,
             "mean_pm25": stats["avg_pm25"],
             "min_pm25": stats["min_pm25"],
             "max_pm25": stats["max_pm25"]
         }
+        
+        cache["statistics"] = stats_result
+        cache["timestamp"] = time.time()
+        
+        logger.info("Statistics calculated successfully.")
+        return stats_result
     except Exception as e:
         logger.error(f"Error retrieving statistics: {e}")
         raise HTTPException(status_code=500, detail="An internal error occurred while retrieving statistics.")
